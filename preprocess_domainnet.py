@@ -11,6 +11,13 @@ import numpy as np
 
 random.seed(1234)
 np.random.seed(1234)
+def cv2_imread_unicode(path):
+    data = np.fromfile(path, dtype=np.uint8)
+    if data.size == 0:
+        return None
+    img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    return img
+
 
 def process_txt(txt_file):
 	data = []
@@ -41,6 +48,9 @@ def create_dataset_for_split(domain, split, split_data, args):
 		# Get path to current image
 		curr_img_path = args.input_dir + split_data[i][0]
 		img = cv2.imread(curr_img_path)
+		if img is None:
+			print(f"[ERROR] 読み込み失敗: {curr_img_path}")
+			break  # 読めない画像はスキップ（または break で中断）
 		img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC)
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 		# Save the image file

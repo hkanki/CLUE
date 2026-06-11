@@ -58,7 +58,7 @@ class TaskNet(nn.Module):
         pass
 
     def load(self, init_path):
-        net_init_dict = torch.load(init_path)
+        net_init_dict = torch.load(init_path,map_location=torch.device('cpu'))
         self.load_state_dict(net_init_dict, strict=False)
 
     def save(self, out_path):
@@ -77,9 +77,11 @@ class LeNet(TaskNet):
 
         self.conv_params = nn.Sequential(
                 nn.Conv2d(self.num_channels, 20, kernel_size=5),
+                nn.BatchNorm2d(20), 
                 nn.MaxPool2d(2),
                 nn.ReLU(),
                 nn.Conv2d(20, 50, kernel_size=5),
+                nn.BatchNorm2d(50),
                 nn.Dropout2d(p=0.5),
                 nn.MaxPool2d(2),
                 nn.ReLU(),

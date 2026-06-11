@@ -36,6 +36,12 @@ torch.cuda.manual_seed(1234)
 ######################################################################
 ##### Miscellaneous utilities and helper classes
 ######################################################################
+# utils.py の先頭付近に追加
+class SkipHyperParams(Exception):
+    """Used to skip current hyperparameter set (e.g., da_loss == 0)."""
+    pass
+
+
 class objectview(object):
 	def __init__(self, d):
 		self.__dict__ = d
@@ -239,7 +245,7 @@ def train(model, device, train_loader, optimizer, epoch):
 	"""
 	model.train()
 	total_loss, correct = 0.0, 0
-	for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
+	for batch_idx, (data, target, _) in enumerate(tqdm(train_loader)):
 		data, target = data.to(device), target.to(device)
 		optimizer.zero_grad()
 		output = model(data)
@@ -266,7 +272,9 @@ def test(model, device, test_loader, split="test"):
 	correct = 0
 	test_acc = 0
 	with torch.no_grad():
-		for data, target in test_loader:
+		
+		for data, target , _ in test_loader:
+		#for data, target in test_loader:
 			data, target = data.to(device), target.to(device)
 			output = model(data)
 			loss = nn.CrossEntropyLoss()(output, target) 
@@ -281,7 +289,55 @@ def test(model, device, test_loader, split="test"):
 
 	return test_acc, test_loss
 
+# def run_unsupervised_da(model, src_train_loader, tgt_sup_loader, tgt_unsup_loader, train_idx, num_classes, device, args):
+# 	aborted=False
+# 	"""
+# 	Unsupervised adaptation of source model to target at round 0
+# 	Returns:
+# 		Model post adaptation
+# 	"""
+# 	adapt_net_file = os.path.join('checkpoints', 'adapt', '{}_{}_{:s}_net_{:s}_{:s}.pth'.format(args.da_strat, \
+# 								  args.uda_lr, args.cnn, args.source, args.target))
+# 	if os.path.exists(adapt_net_file):
+# 		print('Found pretrained checkpoint, loading...')
+# 		adapt_model = get_model('AdaptNet', num_cls=num_classes, weights_init=adapt_net_file, model=args.cnn)
+# 	else:
+# 		print('No pretrained checkpoint found, training...')
+# 		source_file = '{}_{}_source.pth'.format(args.source, args.cnn)
+# 		source_path = os.path.join('checkpoints', 'source', source_file)	
+# 		adapt_model = get_model('AdaptNet', num_cls=num_classes, src_weights_init=source_path, model=args.cnn)
+# 		opt_net_tgt = optim.Adam(adapt_model.tgt_net.parameters(), lr=args.lr, weight_decay=args.wd)
+# 		uda_solver = get_solver(args.da_strat, adapt_model.tgt_net, src_train_loader, tgt_sup_loader, tgt_unsup_loader, \
+# 								train_idx, opt_net_tgt, 0, device, args)
+# 		discriminator = None
+# 		if args.da_strat == 'dann':
+# 			if hasattr(adapt_model, 'discriminator') and (adapt_model.discriminator is not None):
+# 				discriminator = adapt_model.discriminator.to(device)
+# 			else:
+# 				raise RuntimeError("AdaptNet has no discriminator; required for DANN.")
+
+# 		for epoch in range(args.uda_num_epochs):
+# 			if args.da_strat == 'dann':
+# 				opt_dis_adapt = optim.Adam(discriminator.parameters(), lr=args.uda_lr, betas=(0.9, 0.999), weight_decay=0)
+# 				uda_solver.solve(epoch, discriminator, opt_dis_adapt)
+# 			elif args.da_strat in ['mme', 'ft', 'jumbot']:
+# 				ok=uda_solver.solve(epoch)
+# 				if args.da_strat == 'jumbot' and ok is False:
+# 					aborted = True
+# 					break
+# 		if aborted:
+#             # 呼び出し側（train.py）にスキップを通知
+# 			raise SkipHyperParams("da_loss is zero or invalid; skip this hyperparam set.")
+		
+# 		if args.da_strat == 'jumbot':
+# 			uda_solver.save_pi_final()
+
+# 	model, src_model, discriminator = adapt_model.tgt_net, adapt_model.src_net, adapt_model.discriminator
+# 	return model, src_model, discriminator
+
 def run_unsupervised_da(model, src_train_loader, tgt_sup_loader, tgt_unsup_loader, train_idx, num_classes, device, args):
+# def run_unsupervised_da(model, src_train_loader, tgt_sup_loader, tgt_unsup_loader, train_idx, num_classes, device, args, eta1, eta2, epsilon, tau):	
+	aborted=False
 	"""
 	Unsupervised adaptation of source model to target at round 0
 	Returns:
@@ -298,19 +354,33 @@ def run_unsupervised_da(model, src_train_loader, tgt_sup_loader, tgt_unsup_loade
 		source_path = os.path.join('checkpoints', 'source', source_file)	
 		adapt_model = get_model('AdaptNet', num_cls=num_classes, src_weights_init=source_path, model=args.cnn)
 		opt_net_tgt = optim.Adam(adapt_model.tgt_net.parameters(), lr=args.lr, weight_decay=args.wd)
+		# uda_solver = get_solver(args.da_strat, adapt_model.tgt_net, src_train_loader, tgt_sup_loader, tgt_unsup_loader, \
+		# 						train_idx, opt_net_tgt, 0, device, args,eta1, eta2, epsilon, tau)
+		if args.da_strat == 'dann':
+				if hasattr(adapt_model, 'discriminator') and (adapt_model.discriminator is not None):
+					discriminator = adapt_model.discriminator.to(device)
+				else:
+					raise RuntimeError("AdaptNet has no discriminator; required for DANN.")
 		uda_solver = get_solver(args.da_strat, adapt_model.tgt_net, src_train_loader, tgt_sup_loader, tgt_unsup_loader, \
 								train_idx, opt_net_tgt, 0, device, args)
 		for epoch in range(args.uda_num_epochs):
 			if args.da_strat == 'dann':
 				opt_dis_adapt = optim.Adam(discriminator.parameters(), lr=args.uda_lr, betas=(0.9, 0.999), weight_decay=0)
 				uda_solver.solve(epoch, discriminator, opt_dis_adapt)
-			elif args.da_strat in ['mme', 'ft']:
-				uda_solver.solve(epoch)
-		adapt_model.save(adapt_net_file)
-	
+			elif args.da_strat in ['mme', 'ft', 'jumbot']:
+				ok=uda_solver.solve(epoch)
+				if args.da_strat == 'jumbot' and ok is False:
+					aborted = True
+					break
+		if aborted:
+            # 呼び出し側（train.py）にスキップを通知
+			raise SkipHyperParams("da_loss is zero or invalid; skip this hyperparam set.")
+		
+		if args.da_strat == 'jumbot':
+			uda_solver.save_pi_final()
+
 	model, src_model, discriminator = adapt_model.tgt_net, adapt_model.src_net, adapt_model.discriminator
-	return model, src_model, discriminator
-			
+	return model, src_model, discriminator			
 ######################################################################
 ##### Interactive visualization utilities
 ######################################################################
