@@ -140,48 +140,12 @@ class DatasetWithIndex(torch.utils.data.Dataset):
         base_idx = self.indices[i] if self.indices is not None else i
         return x, y, base_idx
 
-	
-
-# class DomainNetDataset(torch.utils.data.Dataset):
-# 	def __init__(self, name, domain, split, transforms):
-# 		self.name = 'DomainNet'
-# 		self.domain = domain
-# 		self.split = split
-# 		root = Path(r"H:\マイドライブ\study\aada+uot(office)_compleate\UOT+AADA(Ofice\CLUE\data")  # ← 実在する出力先
-# 		self.file_path = root / f"{domain}_{split}.h5"        # 例: clipart_train.h5
-# 		self.data, self.labels = None, None
-# 		# with h5py.File(self.file_path, 'r') as file:
-# 		# 	self.dataset_len = len(file["images"])
-# 		# 	self.num_classes = len(set(list(np.array(file['labels']))))
-# 		with h5py.File(self.file_path, 'r') as file:
-# 			n_img = len(file['images'])
-# 			n_lab = len(file['labels'])
-# 			if n_img != n_lab:
-# 				print(f"[WARN] {self.file_path.name}: images({n_img}) != labels({n_lab}) → min を使用")
-# 				self.dataset_len = min(n_img, n_lab)   # ★ ここを修正
-# 				self.num_classes = len(set(list(np.array(file['labels']))))		
-# 		self.transforms = transforms
-# 	def __len__(self):
-# 		return self.dataset_len
-
-# 	def __getitem__(self, idx):
-# 		if self.data is None:
-# 			self.data = h5py.File(self.file_path, 'r')["images"]
-# 			self.labels = h5py.File(self.file_path, 'r')["labels"]
-# 		datum, label = Image.fromarray(np.uint8(np.array(self.data[idx]))), np.array(self.labels[idx])
-# 		return (self.transforms(datum), int(label), idx)
-
-# 	def get_num_classes(self):
-# 		# return self.num_classes
-# 		#! Hardcoded
-# 		return self.num_classes
 class DomainNetDataset(torch.utils.data.Dataset):
     def __init__(self, name, domain, split, transforms):
         self.name = 'DomainNet'
         self.domain = domain
         self.split = split
-        # root = Path(r"H:\マイドライブ\study\aada+uot(office)_compleate\UOT+AADA(Ofice\CLUE\data")
-        root = Path(r"H:\マイドライブ\study\aada+uot(office)_compleate\UOT+AADA(Ofice\CLUE\data")
+        root = Path(r"path/to/data")  # ← 実在する出力先に変更してください
         self.file_path = root / f"{domain}_{split}.h5"
 
         # ★ H5 を1回だけ開いて保持
@@ -324,34 +288,6 @@ class ASDADataset:
 
 		return train_dataset, val_dataset, test_dataset
 
-	# def get_loaders(self, shuffle=True, num_workers=0, normalize=True):
-	# 	if not self.train_dataset: self.get_dsets(normalize=normalize)
-		
-	# 	num_train = len(self.train_dataset)
-	# 	self.train_size = num_train
-
-	# 	if self.name in ["mnist", "svhn"]:
-			
-	# 		indices = list(range(num_train))
-	# 		split = int(np.floor(self.valid_ratio * num_train))
-	# 		if shuffle == True: np.random.shuffle(indices)
-	# 		train_idx, valid_idx = indices[split:], indices[:split]
-			
-	# 		train_sampler = SubsetRandomSampler(train_idx)
-	# 		valid_sampler = SubsetRandomSampler(valid_idx)
-
-	# 	elif self.name in ["real", "quickdraw", "sketch", "infograph", "painting", "clipart"]:
-
-	# 		train_idx = np.arange(len(self.train_dataset))
-	# 		train_sampler = SubsetRandomSampler(train_idx)
-	# 		valid_sampler = SubsetRandomSampler(np.arange(len(self.val_dataset)))
-
-	# 	train_loader = torch.utils.data.DataLoader(self.train_dataset, sampler=train_sampler, \
-	# 											   batch_size=self.batch_size, num_workers=num_workers)
-	# 	val_loader = torch.utils.data.DataLoader(self.val_dataset, sampler=valid_sampler, batch_size=self.batch_size)
-	# 	test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size)
-
-	# 	return train_loader, val_loader, test_loader, train_idx
 
 	def get_loaders(self, shuffle=True, num_workers=0, normalize=True, use_balanced_sampler=False,use_balance = False):
 		if not self.train_dataset:

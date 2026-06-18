@@ -292,6 +292,12 @@ def main():
 	
 	# CLUE hyperparameters
 	parser.add_argument('--clue_softmax_t', type=float, default=1.0, help="CLUE softmax temperature")
+ 
+	# UOT hyperparameters
+	parser.add_argument('--uot_eta1', type=float, default=0.001, help="UOT eta1")
+	parser.add_argument('--uot_eta2', type=float, default=0.01, help="UOT eta2")
+	parser.add_argument('--uot_epsilon', type=float, default=0.05, help="UOT epsilon")
+	parser.add_argument('--uot_tau', type=float, default=0.5, help="UOT tau")
 	
 	# Load arguments from command line or via config file
 	args_cmd = parser.parse_args()

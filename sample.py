@@ -110,21 +110,6 @@ class SamplingStrategy:
 				drop_last=False
 			)
 
-			# tgt_sup_loader の作成（Sampler を明示指定）
-			# tgt_sup_loader = torch.utils.data.DataLoader(
-			#     indexed_dataset,
-			#     batch_sampler=batch_sampler,
-			#     num_workers=0
-			# )
-			# train_sampler = SubsetRandomSampler(self.train_idx[self.idxs_lb])
-			# tgt_sup_loader = torch.utils.data.DataLoader(
-			#     target_train_dset, sampler=train_sampler, batch_size=self.args.batch_size,
-			#     num_workers=0, drop_last=False
-			# )
-			# tgt_unsup_loader = torch.utils.data.DataLoader(
-			#     target_train_dset, shuffle=True, batch_size=self.args.batch_size,
-			#     num_workers=0, drop_last=False
-			# )
 
 			#以前までのやつ
 			unsup_subset     = torch.utils.data.Subset(target_train_dset, unlabeled_indices)
@@ -137,36 +122,6 @@ class SamplingStrategy:
 				drop_last=False
 			)
 
-			#今後の内容
-			# if self.args.da_strat == "jumbot":
-			# 	# ③ ターゲットの「確定ラベル」ルックアップを作成（未知は -1）
-			# 	#    例：長さ = 全ターゲット数、labeled_indices だけ真のラベル、それ以外は -1
-			# # ② 監督なしローダ：『全ターゲット』を回すように変更（←重要）
-			# 	all_target_indices = self.train_idx  # = 全ターゲットの絶対インデックス
-			# 	unsup_check_subset = torch.utils.data.Subset(target_train_dset, all_target_indices)
-			# 	tgt_check_loader = torch.utils.data.DataLoader(
-			# 		unsup_check_subset, batch_size=self.args.batch_size,
-			# 		shuffle=True, num_workers=0, drop_last=False
-			# 	)
-			# 	target_label_lookup = torch.full((len(target_train_dset),), -1, dtype=torch.long)
-			# 	if len(labeled_indices) > 0:
-			# 		target_label_lookup[labeled_indices] = labels
-
-			# 	opt_net_tgt = optim.Adam(self.model.parameters(), lr=self.args.adapt_lr, weight_decay=self.args.wd)
-
-			# 	solver = get_solver(
-			# 		self.args.da_strat, self.model, src_loader, tgt_sup_loader, tgt_check_loader,
-			# 		self.train_idx, opt_net_tgt, da_round, self.device, self.args
-			# 	# ④ ルックアップを Solver に渡す（新規メソッド）
-			# 	)
-			# 	if hasattr(solver, "set_target_label_lookup"):
-			# 		solver.set_target_label_lookup(target_label_lookup)
-
-
-			# tgt_sup_loader = torch.utils.data.DataLoader(target_train_dset, sampler=train_sampler, num_workers=0, \
-			# 											   batch_size=self.args.batch_size, drop_last=False)
-		# tgt_unsup_loader = torch.utils.data.DataLoader(target_train_dset, shuffle=True, num_workers=0, \
-		# 											   batch_size=self.args.batch_size, drop_last=False)			
 		opt_net_tgt = optim.Adam(self.model.parameters(), lr=self.args.adapt_lr, weight_decay=self.args.wd)
 
 		# Update discriminator adversarially with classifier
