@@ -1,0 +1,43 @@
+# Claude Codeの動的な実験情報
+.claude/experiment_context.md
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 仮想環境
+.venv/
+venv/
+env/
+
+# 実験ログ
+experiments/*/logs/
+logs/uot_grid/
+results
+
+# 一時設定
+experiments/*/configs/tmp/
+config/domainnet/tmp_uot_grid/
+
+# 生の中間結果
+experiments/*/results/raw/
+
+# 学習済みモデル・チェックポイント
+experiments/*/checkpoints/
+*.pth
+*.pt
+*.ckpt
+
+# 一時ファイル
+*.tmp
+*.temp
+
+# OS・エディタ
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 設定ファイル
+config/domainnet/
